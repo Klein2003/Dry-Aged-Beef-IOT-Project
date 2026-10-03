@@ -1,596 +1,100 @@
 {
   "version": 1,
-  "author": "Dry Aged Beef IoT",
+  "author": "Uri Shaked",
   "editor": "wokwi",
   "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": -4.76, "attrs": {} },
     {
-      "type": "board-esp32-devkit-c-v4",
-      "id": "esp",
-      "top": 0,
-      "left": 0,
-      "attrs": {}
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 109.55,
+      "left": -76.8,
+      "attrs": { "value": "1000" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": 119.15,
+      "left": -76.8,
+      "attrs": { "value": "1000" }
+    },
+    { "type": "wokwi-led", "id": "led1", "top": 34.8, "left": -169, "attrs": { "color": "red" } },
+    {
+      "type": "wokwi-led",
+      "id": "led2",
+      "top": 63.6,
+      "left": -197.8,
+      "attrs": { "color": "yellow" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led3",
+      "top": 6,
+      "left": -140.2,
+      "attrs": { "color": "limegreen" }
+    },
+    {
+      "type": "wokwi-hc-sr04",
+      "id": "ultrasonic1",
+      "top": -65.7,
+      "left": 303.1,
+      "attrs": { "distance": "55" }
     },
     {
       "type": "wokwi-dht22",
-      "id": "dht11",
-      "top": -200,
-      "left": 300,
-      "attrs": {
-        "temperature": "2",
-        "humidity": "80"
-      }
+      "id": "dht1",
+      "top": -105.3,
+      "left": 177,
+      "attrs": { "temperature": "1", "humidity": "51" }
     },
     {
-      "type": "wokwi-slide-switch",
-      "id": "meat11",
-      "top": -180,
-      "left": 390,
-      "attrs": {
-      }
+      "type": "board-ssd1306",
+      "id": "oled1",
+      "top": 89.54,
+      "left": 192.23,
+      "attrs": { "i2cAddress": "0x3c" }
     },
     {
-      "type": "wokwi-text",
-      "id": "lbl11",
-      "top": -230,
-      "left": 300,
-      "attrs": {
-        "text": "Slot 1-1"
-      }
-    },
-    {
-      "type": "wokwi-dht22",
-      "id": "dht12",
-      "top": -200,
-      "left": 520,
-      "attrs": {
-        "temperature": "2",
-        "humidity": "80"
-      }
-    },
-    {
-      "type": "wokwi-slide-switch",
-      "id": "meat12",
-      "top": -180,
-      "left": 610,
-      "attrs": {
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "lbl12",
-      "top": -230,
-      "left": 520,
-      "attrs": {
-        "text": "Slot 1-2"
-      }
-    },
-    {
-      "type": "wokwi-dht22",
-      "id": "dht13",
-      "top": -200,
-      "left": 740,
-      "attrs": {
-        "temperature": "2",
-        "humidity": "80"
-      }
-    },
-    {
-      "type": "wokwi-slide-switch",
-      "id": "meat13",
-      "top": -180,
-      "left": 830,
-      "attrs": {
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "lbl13",
-      "top": -230,
-      "left": 740,
-      "attrs": {
-        "text": "Slot 1-3"
-      }
-    },
-    {
-      "type": "wokwi-dht22",
-      "id": "dht21",
-      "top": 30,
-      "left": 300,
-      "attrs": {
-        "temperature": "2",
-        "humidity": "80"
-      }
-    },
-    {
-      "type": "wokwi-slide-switch",
-      "id": "meat21",
-      "top": 50,
-      "left": 390,
-      "attrs": {
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "lbl21",
-      "top": 0,
-      "left": 300,
-      "attrs": {
-        "text": "Slot 2-1"
-      }
-    },
-    {
-      "type": "wokwi-dht22",
-      "id": "dht22",
-      "top": 30,
-      "left": 520,
-      "attrs": {
-        "temperature": "2",
-        "humidity": "80"
-      }
-    },
-    {
-      "type": "wokwi-slide-switch",
-      "id": "meat22",
-      "top": 50,
-      "left": 610,
-      "attrs": {
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "lbl22",
-      "top": 0,
-      "left": 520,
-      "attrs": {
-        "text": "Slot 2-2"
-      }
-    },
-    {
-      "type": "wokwi-dht22",
-      "id": "dht23",
-      "top": 30,
-      "left": 740,
-      "attrs": {
-        "temperature": "2",
-        "humidity": "80"
-      }
-    },
-    {
-      "type": "wokwi-slide-switch",
-      "id": "meat23",
-      "top": 50,
-      "left": 830,
-      "attrs": {
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "lbl23",
-      "top": 0,
-      "left": 740,
-      "attrs": {
-        "text": "Slot 2-3"
-      }
-    },
-    {
-      "type": "wokwi-dht22",
-      "id": "dht31",
-      "top": 260,
-      "left": 300,
-      "attrs": {
-        "temperature": "2",
-        "humidity": "80"
-      }
-    },
-    {
-      "type": "wokwi-slide-switch",
-      "id": "meat31",
-      "top": 280,
-      "left": 390,
-      "attrs": {
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "lbl31",
-      "top": 230,
-      "left": 300,
-      "attrs": {
-        "text": "Slot 3-1"
-      }
-    },
-    {
-      "type": "wokwi-dht22",
-      "id": "dht32",
-      "top": 260,
-      "left": 520,
-      "attrs": {
-        "temperature": "2",
-        "humidity": "80"
-      }
-    },
-    {
-      "type": "wokwi-slide-switch",
-      "id": "meat32",
-      "top": 280,
-      "left": 610,
-      "attrs": {
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "lbl32",
-      "top": 230,
-      "left": 520,
-      "attrs": {
-        "text": "Slot 3-2"
-      }
-    },
-    {
-      "type": "wokwi-dht22",
-      "id": "dht33",
-      "top": 260,
-      "left": 740,
-      "attrs": {
-        "temperature": "2",
-        "humidity": "80"
-      }
-    },
-    {
-      "type": "wokwi-slide-switch",
-      "id": "meat33",
-      "top": 280,
-      "left": 830,
-      "attrs": {
-      }
-    },
-    {
-      "type": "wokwi-text",
-      "id": "lbl33",
-      "top": 230,
-      "left": 740,
-      "attrs": {
-        "text": "Slot 3-3"
-      }
+      "type": "wokwi-resistor",
+      "id": "r3",
+      "top": 99.95,
+      "left": -76.8,
+      "attrs": { "value": "1000" }
     }
   ],
   "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "r1:1", "led1:A", "green", [ "v0.07", "h-10" ] ],
+    [ "r2:1", "led2:A", "green", [ "h-38.4", "h-57.6" ] ],
+    [ "esp:GND.1", "led2:C", "black", [ "h0" ] ],
+    [ "esp:GND.1", "led1:C", "black", [ "h0" ] ],
+    [ "esp:26", "r1:2", "green", [ "h0" ] ],
+    [ "r2:2", "esp:27", "green", [ "v0" ] ],
+    [ "dht1:VCC", "oled1:VCC", "red", [ "v67.2", "h48" ] ],
+    [ "ultrasonic1:VCC", "oled1:VCC", "red", [ "v48", "h-134.4" ] ],
+    [ "oled1:VCC", "esp:3V3", "red", [ "v-19.2", "h-124.65", "v-96", "h-124.8", "v38.4" ] ],
+    [ "oled1:SDA", "esp:12", "green", [ "v-28.8", "h-134.33", "v163.2", "h-144", "v-86.4" ] ],
+    [ "oled1:SCL", "esp:13", "green", [ "v-38.4", "h-114.9", "v182.4", "h-163.2", "v-76.8" ] ],
+    [ "oled1:GND", "esp:GND.2", "black", [ "v0" ] ],
+    [ "dht1:GND", "esp:GND.2", "black", [ "v0" ] ],
+    [ "ultrasonic1:GND", "esp:GND.2", "black", [ "v0" ] ],
     [
-      "esp:TX",
-      "$serialMonitor:RX",
-      "",
-      []
-    ],
-    [
-      "esp:RX",
-      "$serialMonitor:TX",
-      "",
-      []
-    ],
-    [
-      "dht11:VCC",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "dht11:GND",
-      "esp:GND.1",
-      "black",
-      []
-    ],
-    [
-      "dht11:SDA",
-      "esp:4",
-      "green",
-      []
-    ],
-    [
-      "meat11:1",
-      "esp:GND.2",
-      "black",
-      []
-    ],
-    [
-      "meat11:3",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "meat11:2",
+      "ultrasonic1:ECHO",
       "esp:32",
-      "orange",
-      []
-    ],
-    [
-      "dht12:VCC",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "dht12:GND",
-      "esp:GND.1",
-      "black",
-      []
-    ],
-    [
-      "dht12:SDA",
-      "esp:5",
       "green",
-      []
+      [ "v19.2", "h-250.4", "v201.6", "h-182.4", "v-163.2" ]
     ],
     [
-      "meat12:1",
-      "esp:GND.2",
-      "black",
-      []
-    ],
-    [
-      "meat12:3",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "meat12:2",
       "esp:33",
-      "orange",
-      []
-    ],
-    [
-      "dht13:VCC",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "dht13:GND",
-      "esp:GND.1",
-      "black",
-      []
-    ],
-    [
-      "dht13:SDA",
-      "esp:13",
+      "ultrasonic1:TRIG",
       "green",
-      []
+      [ "h-47.85", "v163.2", "h115.2", "h86.4", "v-220.8", "h230.8" ]
     ],
-    [
-      "meat13:1",
-      "esp:GND.2",
-      "black",
-      []
-    ],
-    [
-      "meat13:3",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "meat13:2",
-      "esp:25",
-      "orange",
-      []
-    ],
-    [
-      "dht21:VCC",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "dht21:GND",
-      "esp:GND.1",
-      "black",
-      []
-    ],
-    [
-      "dht21:SDA",
-      "esp:14",
-      "green",
-      []
-    ],
-    [
-      "meat21:1",
-      "esp:GND.2",
-      "black",
-      []
-    ],
-    [
-      "meat21:3",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "meat21:2",
-      "esp:26",
-      "orange",
-      []
-    ],
-    [
-      "dht22:VCC",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "dht22:GND",
-      "esp:GND.1",
-      "black",
-      []
-    ],
-    [
-      "dht22:SDA",
-      "esp:15",
-      "green",
-      []
-    ],
-    [
-      "meat22:1",
-      "esp:GND.2",
-      "black",
-      []
-    ],
-    [
-      "meat22:3",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "meat22:2",
-      "esp:27",
-      "orange",
-      []
-    ],
-    [
-      "dht23:VCC",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "dht23:GND",
-      "esp:GND.1",
-      "black",
-      []
-    ],
-    [
-      "dht23:SDA",
-      "esp:16",
-      "green",
-      []
-    ],
-    [
-      "meat23:1",
-      "esp:GND.2",
-      "black",
-      []
-    ],
-    [
-      "meat23:3",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "meat23:2",
-      "esp:34",
-      "orange",
-      []
-    ],
-    [
-      "dht31:VCC",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "dht31:GND",
-      "esp:GND.1",
-      "black",
-      []
-    ],
-    [
-      "dht31:SDA",
-      "esp:17",
-      "green",
-      []
-    ],
-    [
-      "meat31:1",
-      "esp:GND.2",
-      "black",
-      []
-    ],
-    [
-      "meat31:3",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "meat31:2",
-      "esp:35",
-      "orange",
-      []
-    ],
-    [
-      "dht32:VCC",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "dht32:GND",
-      "esp:GND.1",
-      "black",
-      []
-    ],
-    [
-      "dht32:SDA",
-      "esp:18",
-      "green",
-      []
-    ],
-    [
-      "meat32:1",
-      "esp:GND.2",
-      "black",
-      []
-    ],
-    [
-      "meat32:3",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "meat32:2",
-      "esp:VP",
-      "orange",
-      []
-    ],
-    [
-      "dht33:VCC",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "dht33:GND",
-      "esp:GND.1",
-      "black",
-      []
-    ],
-    [
-      "dht33:SDA",
-      "esp:19",
-      "green",
-      []
-    ],
-    [
-      "meat33:1",
-      "esp:GND.2",
-      "black",
-      []
-    ],
-    [
-      "meat33:3",
-      "esp:3V3",
-      "red",
-      []
-    ],
-    [
-      "meat33:2",
-      "esp:VN",
-      "orange",
-      []
-    ]
+    [ "r3:2", "esp:25", "green", [ "v0" ] ],
+    [ "led3:C", "esp:GND.1", "black", [ "v105.6", "h0.4" ] ],
+    [ "r3:1", "led3:A", "green", [ "v0", "h-38.4" ] ],
+    [ "dht1:SDA", "esp:14", "green", [ "v76.8", "h-38.3", "v134.4", "h-172.8", "v-86.4" ] ]
   ],
   "dependencies": {}
 }
