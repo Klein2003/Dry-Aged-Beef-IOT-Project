@@ -6,18 +6,18 @@ import altair as alt
 import pandas as pd
 import requests
 import streamlit as st
+
+from config import (DEFAULTS, HUM_MAX, HUM_MIN, METRICS, SHELVES, SLOTS, TEMP_MAX,
+                    TEMP_MIN, issues_of)
+from mqtt_bridge import MqttBridge
+from storage import Recorder
  
 st.set_page_config(page_title="Dry Aged Beef Cabinet", page_icon="🥩", layout="wide")
  
-# ───────────── ค่าที่เหมาะสม ─────────────
-TEMP_MIN, TEMP_MAX = 1.0, 3.0      # °C
-HUM_MIN, HUM_MAX = 75.0, 85.0      # %RH
-SHELVES, SLOTS = 3, 3
 ALERT_REPEAT_SEC = 300             # ส่งเตือนซ้ำทุก 5 นาที ถ้ายังผิดปกติอยู่
-METRICS = {
-    "temp": ("อุณหภูมิ", "°C", TEMP_MIN, TEMP_MAX),
-    "hum": ("ความชื้น", "%", HUM_MIN, HUM_MAX),
-}
+STALE_SEC = 60                     # ไม่มีข้อมูลจาก MQTT เกินนี้ = ถือว่าขาดการเชื่อมต่อ
+RECORD_LABELS = {"hourly": "รายชั่วโมง", "out_of_range": "ผิดปกติ",
+                 "back_to_normal": "กลับสู่ปกติ"}
  
  
 # ───────────── LINE OA (Messaging API) ─────────────
@@ -27,7 +27,7 @@ def cfg(key):
             return st.secrets[key]
     except Exception:
         pass
-    return os.getenv(key)
+    return os.getenv(key, DEFAULTS.get(key))
  
  
 def send_line(text):
@@ -46,13 +46,22 @@ def send_line(text):
         return False, str(e)
  
  
+# ───────────── MQTT + SQLite (สร้างครั้งเดียวต่อ process) ─────────────
+@st.cache_resource
+def get_backend():
+    recorder = Recorder(cfg("DB_PATH"), int(cfg("HOURLY_LOG_SEC")), int(cfg("ALARM_LOG_SEC")))
+    bridge = MqttBridge(cfg("MQTT_HOST"), cfg("MQTT_PORT"), cfg("MQTT_TOPIC_BASE"), recorder,
+                        cfg("MQTT_USERNAME"), cfg("MQTT_PASSWORD")).start()
+    return recorder, bridge
+
+
 # ───────────── State + Simulator ─────────────
 def init_state():
     if "slots" in st.session_state:
         return
     st.session_state.slots = {
         (s, c): {"meat": random.random() < 0.75, "temp": 2.0, "hum": 80.0,
-                 "fault_t": 0.0, "fault_h": 0.0}
+                 "fault_t": 0.0, "fault_h": 0.0, "offline": False}
         for s in range(1, SHELVES + 1) for c in range(1, SLOTS + 1)
     }
     st.session_state.history = []   # ค่าย้อนหลัง
@@ -60,9 +69,20 @@ def init_state():
     st.session_state.active = {}    # ปัญหาที่ยังเกิดอยู่
  
  
-def read_sensors():
-    """จุดนี้คือที่ต้องเปลี่ยนเป็นการอ่านค่าจริง (MQTT / HTTP / DB / Serial)
-    ให้อัปเดต slot["meat"], slot["temp"], slot["hum"] ของแต่ละช่อง"""
+def read_mqtt(bridge):
+    """อัปเดตค่าแต่ละช่องจากข้อความ MQTT ล่าสุดที่ ESP32 ส่งมา
+    (การบันทึกลง SQLite ทำใน MqttBridge แล้ว ไม่ต้องรอหน้าเว็บ)"""
+    data = bridge.snapshot()
+    now = datetime.now()
+    for key, sl in st.session_state.slots.items():
+        d = data.get(key)
+        if d is None or (now - d["t"]).total_seconds() > STALE_SEC:
+            sl.update(meat=False, offline=True)
+            continue
+        sl.update(meat=d["meat"], temp=d["temp"], hum=d["hum"], offline=False)
+
+
+def simulate_sensors():
     for sl in st.session_state.slots.values():
         if sl["meat"]:  # ตู้ปรับให้เข้าช่วงเอง (ดึงกลับเข้าหา 2°C / 80%)
             sl["temp"] += (2 - sl["temp"]) * 0.25 + sl["fault_t"] + random.uniform(-0.08, 0.08)
@@ -72,24 +92,9 @@ def read_sensors():
             sl["hum"] += (60 - sl["hum"]) * 0.1 + random.uniform(-0.4, 0.4)
  
  
-def deviation(value, lo, hi):
-    if value > hi:
-        return "สูง", value - hi
-    if value < lo:
-        return "ต่ำ", lo - value
-    return None, 0.0
- 
- 
 def slot_issues(sl):
     """คืน dict ของ metric ที่ผิดปกติ (เฉพาะช่องที่มีเนื้อ)"""
-    if not sl["meat"]:
-        return {}
-    out = {}
-    for m, (_, _, lo, hi) in METRICS.items():
-        direction, diff = deviation(sl[m], lo, hi)
-        if direction:
-            out[m] = (direction, diff)
-    return out
+    return issues_of(sl["meat"], sl["temp"], sl["hum"])
  
  
 def build_alert_text(key, m, direction, diff, since, sl):
@@ -174,6 +179,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
  
 init_state()
+recorder, bridge = get_backend()
  
 st.markdown('<div class="title">🥩 Dry Aged Beef Cabinet</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="sub">เป้าหมาย: อุณหภูมิ {TEMP_MIN:g}–{TEMP_MAX:g}°C · '
@@ -182,32 +188,56 @@ st.markdown(f'<div class="sub">เป้าหมาย: อุณหภูม�
 # ── Sidebar ──
 with st.sidebar:
     st.header("⚙️ ตั้งค่า")
+    source = st.radio("แหล่งข้อมูล", ["MQTT (ESP32)", "จำลอง"], horizontal=True)
+    use_mqtt = source.startswith("MQTT")
     live = st.toggle("อัปเดตอัตโนมัติ", value=True)
     every = st.select_slider("รีเฟรชทุก (วินาที)", [1, 2, 3, 5, 10], value=2)
+
+    st.subheader("📡 MQTT")
+    st.caption(f"`{cfg('MQTT_HOST')}:{cfg('MQTT_PORT')}`  \n"
+               f"topic: `{cfg('MQTT_TOPIC_BASE')}/slot/+`")
+    if bridge.connected:
+        st.success(f"เชื่อมต่อ broker แล้ว · ESP32: {bridge.device_status or 'ไม่ทราบสถานะ'}")
+    else:
+        st.warning("ยังไม่ได้เชื่อมต่อ broker")
+    if bridge.last_error:
+        st.caption(f"⚠️ {bridge.last_error}")
+    st.caption(f"🗄️ SQLite: `{cfg('DB_PATH')}`")
  
     st.subheader("📲 LINE OA")
     if st.button("ส่งข้อความทดสอบ"):
         ok, info = send_line("✅ ทดสอบการแจ้งเตือนจากตู้ Dry Aged")
         (st.success if ok else st.error)(info)
  
-    st.subheader("🧪 โหมดจำลอง (ลบออกเมื่อใช้ sensor จริง)")
-    pick = st.selectbox("เลือกช่อง", [f"{s}-{c}" for s in range(1, 4) for c in range(1, 4)])
-    key = tuple(int(x) for x in pick.split("-"))
-    sl = st.session_state.slots[key]
-    sl["meat"] = st.checkbox("มีเนื้ออยู่ในช่อง", value=sl["meat"], key=f"meat_{pick}")
-    a, b = st.columns(2)
-    if a.button("🔥 อุณหภูมิสูง"):
-        sl["fault_t"] = 0.6
-    if b.button("💧 ชื้นต่ำ"):
-        sl["fault_h"] = -2.0
-    if st.button("ล้างความผิดปกติ"):
-        sl["fault_t"] = sl["fault_h"] = 0.0
+log_sim = False
+if not use_mqtt:
+    with st.sidebar:
+        st.subheader("🧪 โหมดจำลอง")
+        log_sim = st.checkbox("บันทึกข้อมูลจำลองลง SQLite ด้วย (ไว้ทดสอบ)", value=False)
+        pick = st.selectbox("เลือกช่อง", [f"{s}-{c}" for s in range(1, 4) for c in range(1, 4)])
+        key = tuple(int(x) for x in pick.split("-"))
+        sl = st.session_state.slots[key]
+        sl["meat"] = st.checkbox("มีเนื้ออยู่ในช่อง", value=sl["meat"], key=f"meat_{pick}")
+        a, b = st.columns(2)
+        if a.button("🔥 อุณหภูมิสูง"):
+            sl["fault_t"] = 0.6
+        if b.button("💧 ชื้นต่ำ"):
+            sl["fault_h"] = -2.0
+        if st.button("ล้างความผิดปกติ"):
+            sl["fault_t"] = sl["fault_h"] = 0.0
  
  
 @st.fragment(run_every=every if live else None)
 def dashboard():
-    if live:
-        read_sensors()
+    if use_mqtt:
+        read_mqtt(bridge)
+    elif live:
+        for sl in st.session_state.slots.values():
+            sl["offline"] = False
+        simulate_sensors()
+        if log_sim:
+            for key, sl in st.session_state.slots.items():
+                recorder.process(key, sl["meat"], sl["temp"], sl["hum"])
     process_alerts()
     record_history()
  
@@ -230,7 +260,8 @@ def dashboard():
     else:
         st.success("ทุกช่องอยู่ในเกณฑ์ปกติ")
  
-    tab1, tab2, tab3 = st.tabs(["📦 ภาพรวมตู้", "📈 กราฟย้อนหลัง", "🔔 ประวัติแจ้งเตือน"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📦 ภาพรวมตู้", "📈 กราฟย้อนหลัง", "🔔 ประวัติแจ้งเตือน",
+                                      "🗄️ ข้อมูลที่บันทึก (SQLite)"])
  
     with tab1:
         for s in range(1, SHELVES + 1):
@@ -239,12 +270,16 @@ def dashboard():
             for c, col in zip(range(1, SLOTS + 1), cols):
                 sl = slots[(s, c)]
                 issues = slot_issues(sl)
-                if not sl["meat"]:
+                if sl.get("offline"):
+                    cls, label = "empty", "ไม่มีข้อมูล"
+                elif not sl["meat"]:
                     cls, label = "empty", "ว่าง"
                 elif issues:
                     cls, label = "bad", "ผิดปกติ"
                 else:
                     cls, label = "ok", "ปกติ"
+                tv, hv = ("-", "-") if sl.get("offline") else \
+                    (f'{sl["temp"]:.1f}°C', f'{sl["hum"]:.0f}%')
                 tcls = "bad" if "temp" in issues else ""
                 hcls = "bad" if "hum" in issues else ""
                 notes = "".join(
@@ -253,8 +288,8 @@ def dashboard():
                 col.markdown(
                     f'<div class="card {cls}"><div class="hd"><span>ช่อง {s}-{c}</span>'
                     f'<span class="pill {cls}">{label}</span></div>'
-                    f'<div class="vals"><div><small>🌡 อุณหภูมิ</small><b class="{tcls}">{sl["temp"]:.1f}°C</b></div>'
-                    f'<div><small>💧 ความชื้น</small><b class="{hcls}">{sl["hum"]:.0f}%</b></div></div>'
+                    f'<div class="vals"><div><small>🌡 อุณหภูมิ</small><b class="{tcls}">{tv}</b></div>'
+                    f'<div><small>💧 ความชื้น</small><b class="{hcls}">{hv}</b></div></div>'
                     f'{notes}</div>',
                     unsafe_allow_html=True)
  
@@ -284,6 +319,35 @@ def dashboard():
                          use_container_width=True, hide_index=True)
         else:
             st.info("ยังไม่มีการแจ้งเตือน")
+
+    with tab4:
+        db_records()
+
+
+def db_records():
+    st.caption("บันทึกเฉพาะช่องที่มีเนื้อ: ทุก 1 ชั่วโมง + ตอนที่อุณหภูมิ/ความชื้นออกนอกเกณฑ์ "
+               "(แต่ละช่องแยกตาราง slot_<ชั้น>_<ช่อง>)")
+    counts = recorder.counts()
+    st.dataframe(pd.DataFrame([
+        {"ช่อง": f"{s}-{c}", "ตาราง": f"slot_{s}_{c}",
+         **{RECORD_LABELS[t]: counts[(s, c)].get(t, 0) for t in RECORD_LABELS}}
+        for s, c in sorted(counts)]), use_container_width=True, hide_index=True)
+
+    a, b = st.columns([1, 2])
+    pick = a.selectbox("ช่อง", [f"{s}-{c}" for s in range(1, SHELVES + 1)
+                                for c in range(1, SLOTS + 1)], key="db_slot")
+    types = b.multiselect("ประเภท", list(RECORD_LABELS), default=list(RECORD_LABELS),
+                          format_func=RECORD_LABELS.get, key="db_types")
+    s, c = (int(x) for x in pick.split("-"))
+    df = pd.DataFrame(recorder.fetch(s, c, types), columns=["ts", "temp", "hum", "record_type", "detail"])
+    if df.empty:
+        st.info("ยังไม่มีข้อมูลที่บันทึกสำหรับช่องนี้")
+        return
+    df["record_type"] = df["record_type"].map(RECORD_LABELS)
+    df.columns = ["เวลา", "อุณหภูมิ (°C)", "ความชื้น (%)", "ประเภท", "รายละเอียด"]
+    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.download_button("⬇️ ดาวน์โหลด CSV", df.to_csv(index=False).encode("utf-8-sig"),
+                       file_name=f"slot_{s}_{c}.csv", mime="text/csv")
  
  
 dashboard()
