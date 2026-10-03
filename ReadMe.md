@@ -21,7 +21,7 @@
 - `app.py` dashboard (เลือกแหล่งข้อมูลได้ว่าจะใช้ MQTT จาก ESP32 หรือโหมดจำลอง)
 - `mqtt_bridge.py` รับข้อมูลจาก MQTT แล้วส่งให้ `storage.py` บันทึกลง SQLite
 - รัน: `streamlit run app.py` (หรือ `python mqtt_bridge.py` ถ้าจะเก็บข้อมูลอย่างเดียวโดยไม่เปิดหน้าเว็บ — อย่ารันทั้งสองแบบพร้อมกันกับ DB ไฟล์เดียวกัน ไม่งั้นข้อมูลจะถูกบันทึกซ้ำ)
-- ตั้งค่าได้ด้วย env หรือ `.streamlit/secrets.toml`: `MQTT_HOST`, `MQTT_PORT`, `MQTT_TOPIC_BASE`, `MQTT_USERNAME`, `MQTT_PASSWORD`, `DB_PATH`, `HOURLY_LOG_SEC`, `ALARM_LOG_SEC`
+- ตั้งค่าได้ด้วย env หรือ `.streamlit/secrets.toml` (คัดลอกจาก `.streamlit/secrets.toml.example` แล้วใส่ค่าจริง ไฟล์จริงจะไม่ถูก commit ขึ้น git) รวมถึง `LINE_CHANNEL_ACCESS_TOKEN`, `LINE_USER_ID` สำหรับแจ้งเตือน LINE และ `MQTT_HOST`, `MQTT_PORT`, `MQTT_TOPIC_BASE`, `MQTT_USERNAME`, `MQTT_PASSWORD`, `DB_PATH`, `HOURLY_LOG_SEC`, `ALARM_LOG_SEC`
 - ถ้าใช้ broker สาธารณะ (broker.hivemq.com) ควรเปลี่ยน `TOPIC_BASE` / `MQTT_TOPIC_BASE` ให้ไม่ซ้ำกับคนอื่น
 
 ### การเก็บข้อมูล (SQLite `data/dryaged.db`)
