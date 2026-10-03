@@ -8,6 +8,7 @@
 
 แต่ละช่องเก็บแยกตารางกัน: slot_1_1, slot_1_2, ... slot_3_3
 """
+import os
 import sqlite3
 import threading
 from datetime import datetime, timedelta
@@ -23,8 +24,9 @@ def table_name(shelf, slot):
 
 
 class Recorder:
-    def __init__(self, path="dryaged.db", hourly_sec=3600, alarm_sec=60):
+    def __init__(self, path="data/dryaged.db", hourly_sec=3600, alarm_sec=60):
         self.path = path
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)   # สร้างโฟลเดอร์ data/ ถ้ายังไม่มี
         self.hourly = timedelta(seconds=hourly_sec)
         self.alarm = timedelta(seconds=alarm_sec)
         self.lock = threading.Lock()

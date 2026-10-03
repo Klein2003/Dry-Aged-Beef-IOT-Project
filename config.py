@@ -14,10 +14,10 @@ METRICS = {
 DEFAULTS = {
     "MQTT_HOST": "broker.hivemq.com",
     "MQTT_PORT": "1883",
-    "MQTT_TOPIC_BASE": "dryaged/cabinet1",   # ต้องตรงกับ TOPIC_BASE ใน sketch.ino
+    "MQTT_TOPIC_BASE": "dryaged/cabinet1",   # ต้องตรงกับ TOPIC_BASE ใน wokwi/main.py
     "MQTT_USERNAME": "",
     "MQTT_PASSWORD": "",
-    "DB_PATH": "dryaged.db",
+    "DB_PATH": "data/dryaged.db",       # ไฟล์ข้อมูลทั้งหมดเก็บในโฟลเดอร์ data/
     "HOURLY_LOG_SEC": "3600",                 # เก็บข้อมูลปกติทุก 1 ชั่วโมง
     "ALARM_LOG_SEC": "60",                    # ระหว่างผิดปกติ เก็บซ้ำทุก 60 วินาที
 }

@@ -24,7 +24,8 @@
 - ตั้งค่าได้ด้วย env หรือ `.streamlit/secrets.toml`: `MQTT_HOST`, `MQTT_PORT`, `MQTT_TOPIC_BASE`, `MQTT_USERNAME`, `MQTT_PASSWORD`, `DB_PATH`, `HOURLY_LOG_SEC`, `ALARM_LOG_SEC`
 - ถ้าใช้ broker สาธารณะ (broker.hivemq.com) ควรเปลี่ยน `TOPIC_BASE` / `MQTT_TOPIC_BASE` ให้ไม่ซ้ำกับคนอื่น
 
-### การเก็บข้อมูล (SQLite `dryaged.db`)
+### การเก็บข้อมูล (SQLite `data/dryaged.db`)
+- ไฟล์ข้อมูลทั้งหมดอยู่ในโฟลเดอร์ `data/` (สร้างให้อัตโนมัติถ้ายังไม่มี, ไฟล์ `.db` ไม่ถูก commit ขึ้น git) เปลี่ยนที่เก็บได้ด้วย `DB_PATH`
 - เก็บ **เฉพาะช่องที่ตรวจพบเนื้อ** และ**แต่ละช่องแยกตาราง** `slot_1_1` … `slot_3_3`
 - คอลัมน์: `id, ts, temp, hum, record_type, detail`
 - `record_type`
