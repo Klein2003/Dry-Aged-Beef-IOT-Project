@@ -38,3 +38,6 @@
 ## Wokwi
 - Shelf 1 Slot 1: https://wokwi.com/projects/476826947686730753
 - Shelf 2 Slot 1: https://wokwi.com/projects/476827530946783233
+
+## Streamlit
+-เว็บ: https://dry-aged-beef-iot-project-pehmkonzetuta8usgjr4pc.streamlit.app/
